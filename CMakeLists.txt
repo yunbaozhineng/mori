@@ -24,6 +24,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 option(USE_ROCM "Whether to use rocm" ON)
 option(USE_BNXT "Whether to use BNXT NIC" OFF)
 option(USE_IONIC "Whether to use IONIC" OFF)
+option(USE_JMRD "Whether to use JMRD" OFF)
 option(BUILD_EXAMPLES "Whether to build examples" ON)
 option(BUILD_BENCHMARK "Whether to build benchmark targets" OFF)
 # MPI is required by mpi_bootstrap, the C++ examples, and every benchmark
@@ -71,7 +72,7 @@ option(MORI_MULTITHREAD_SUPPORT
        "Enable single-process multi-thread multi-GPU support in mori_shmem" OFF)
 
 # ---------------------------------------------------------------------------
-# Host NIC: all vendor-specific dv libraries (mlx5, bnxt_re, ionic) are loaded
+# Host NIC: all vendor-specific dv libraries (mlx5, bnxt_re, ionic,jmrd) are loaded
 # at runtime via dlopen. No compile-time library or header detection needed.
 # ---------------------------------------------------------------------------
 message(STATUS "Host NIC: all dv libraries loaded at runtime via dlopen")
@@ -231,9 +232,7 @@ if(HAVE_WNO_DEPRECATED_LITERAL_OPERATOR)
   target_compile_options(spdlog PRIVATE -Wno-deprecated-literal-operator)
 endif()
 
-add_library(mori_logging INTERFACE)
-target_include_directories(mori_logging INTERFACE include)
-target_link_libraries(mori_logging INTERFACE spdlog::spdlog)
+add_subdirectory(src/utils)
 
 if(HAVE_WNO_DEPRECATED_LITERAL_OPERATOR)
   target_compile_options(mori_logging

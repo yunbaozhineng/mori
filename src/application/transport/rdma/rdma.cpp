@@ -40,6 +40,7 @@
 #include "mori/application/transport/rdma/providers/dv_loader.hpp"
 #include "mori/application/transport/rdma/providers/ibverbs/ibverbs.hpp"
 #include "mori/application/transport/rdma/providers/ionic/ionic.hpp"
+#include "mori/application/transport/rdma/providers/jmrd/jmrd.hpp"
 #include "mori/application/transport/rdma/providers/mlx5/mlx5.hpp"
 #include "mori/hip_compat.hpp"
 #include "mori/utils/env_utils.hpp"
@@ -158,7 +159,7 @@ bool QueryGidAtIndex(ibv_context* context, uint32_t portId, int index,
     return true;
   }
 
-  union ibv_gid legacy_gid{};
+  union ibv_gid legacy_gid {};
   if (ibv_query_gid(context, portId, index, &legacy_gid) == 0) {
     if (out_gid) *out_gid = legacy_gid;
     if (out_type) {
@@ -248,12 +249,12 @@ GidSelectionResult AutoSelectGidIndex(ibv_context* context, uint32_t portId,
 
   int bestScore = INT_MIN;
   int bestIdx = -1;
-  union ibv_gid bestGid{};
+  union ibv_gid bestGid {};
   ibv_gid_type bestType = IBV_GID_TYPE_IB;
   bool found = false;
 
   for (int idx = 0; idx < gidTableLen; ++idx) {
-    union ibv_gid gid{};
+    union ibv_gid gid {};
     ibv_gid_type gidType = IBV_GID_TYPE_IB;
     if (!QueryGidAtIndex(context, portId, idx, portAttr, &gid, &gidType)) continue;
 
@@ -716,6 +717,13 @@ RdmaDevice* RdmaContext::RdmaDeviceFactory(ibv_device* inDevice) {
           return nullptr;
         }
         return new IonicDevice(inDevice);
+        break;
+      case (static_cast<uint32_t>(RdmaDeviceVendorId::Jaguar)):
+        if (!JmrdDvApi::Available()) {
+          MORI_APP_ERROR("JMRD device detected but libjmrd.so not available at runtime");
+          return nullptr;
+        }
+        return new JmrdDevice(inDevice);
         break;
       default:
         return nullptr;

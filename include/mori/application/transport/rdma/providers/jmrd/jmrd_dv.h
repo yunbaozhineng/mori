@@ -1,6 +1,5 @@
-// Copyright © Advanced Micro Devices, Inc. All rights reserved.
-//
-// MIT License
+// SPDX-License-Identifier: MIT
+// Copyright © 2021-2026 Shenzhen Yunbao Microsystems. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,14 +20,37 @@
 // SOFTWARE.
 #pragma once
 
-// Device-only RDMA aggregator: the device-side post/poll primitives plus every
-// provider's device specializations (provider selected at runtime/compile-time
-// by the consumer). Kernel TUs that drive RDMA should include THIS; include
-// rdma.hpp instead when you also need the host primitives layer.
-#if defined(__HIPCC__) || defined(__CUDACC__)
-#include "mori/core/transport/rdma/device_primitives.hpp"
-#include "mori/core/transport/rdma/providers/bnxt/bnxt_device_primitives.hpp"
-#include "mori/core/transport/rdma/providers/ionic/ionic_device_primitives.hpp"
-#include "mori/core/transport/rdma/providers/jmrd/jmrd_device_primitives.hpp"
-#include "mori/core/transport/rdma/providers/mlx5/mlx5_device_primitives.hpp"
+#if __has_include(<infiniband/jmdv.h>)
+#include <infiniband/jmdv.h>
+#else
+
+#include <infiniband/verbs.h>
+
+enum jmdv_umem_type {
+  JMDV_MEM_TYPE_HOST_VA = 0,
+  JMDV_MEM_TYPE_GPU_VA = 1,
+};
+
+enum jmdv_caps {
+  JMDV_CAPS_RRSP = 1 << 0,
+  JMDV_CAPS_WQE_FPSN = 1 << 1,
+};
+
+struct jmdv_umem {
+  void* mem_addr;
+  size_t size;
+  enum jmdv_umem_type type;
+};
+
+struct jmdv_uar {
+  int size;
+  void* reg_addr;
+};
+
+struct jmdv_cq_init_attr {
+  uint64_t comp_mask; /* Use enum jmdv_cq_init_attr_mask */
+  uint8_t collapsed;
+  uint8_t filter_err_cqe;
+};
+
 #endif

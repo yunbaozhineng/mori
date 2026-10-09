@@ -224,10 +224,79 @@ struct IonicDvApi {
   }
 };
 
+struct JmrdDvApi {
+  using jm_get_qp_db_t = int (*)(struct ibv_context*, struct jmdv_uar*);
+  using jm_get_cq_db_t = int (*)(struct ibv_context*, struct jmdv_uar*);
+  using jm_get_cq_size_t = int (*)(struct ibv_context*, uint32_t);
+  using jm_get_cq_info_t = int (*)(struct ibv_cq*, uint32_t*, uint8_t*, uint32_t*);
+  using jm_get_sq_info_t = int (*)(struct ibv_qp*, uint32_t*, uint32_t*);
+  using jm_get_cq_dbr_size_t = int (*)(struct ibv_context*);
+  using jm_get_sq_size_t = int (*)(struct ibv_context*, int, int, int);
+  using jm_get_qp_dbr_size_t = int (*)(struct ibv_context*);
+  using jm_set_udp_src_port_t = int (*)(struct ibv_qp*, uint16_t[2], uint8_t);
+  using jm_umem_create_cq_t = struct ibv_cq* (*)(struct ibv_context*, uint32_t, struct jmdv_umem*,
+                                                 struct jmdv_umem*, struct jmdv_cq_init_attr*);
+  using jm_umem_destroy_cq_t = void (*)(struct ibv_cq*);
+  using jm_umem_create_qp_t = struct ibv_qp* (*)(struct ibv_context*, struct ibv_qp_init_attr_ex*,
+                                                 struct jmdv_umem*, struct jmdv_umem*);
+  using jm_umem_destroy_qp_t = void (*)(struct ibv_qp*);
+
+  jm_get_qp_db_t jm_get_qp_db = nullptr;
+  jm_get_cq_db_t jm_get_cq_db = nullptr;
+  jm_get_cq_size_t jm_get_cq_size = nullptr;
+  jm_get_cq_info_t jm_get_cq_info = nullptr;
+  jm_get_sq_info_t jm_get_sq_info = nullptr;
+  jm_get_cq_dbr_size_t jm_get_cq_dbr_size = nullptr;
+  jm_get_sq_size_t jm_get_sq_size = nullptr;
+  jm_get_qp_dbr_size_t jm_get_qp_dbr_size = nullptr;
+  jm_set_udp_src_port_t jm_set_udp_src_port = nullptr;
+  jm_umem_create_cq_t jm_umem_create_cq = nullptr;
+  jm_umem_destroy_cq_t jm_umem_destroy_cq = nullptr;
+  jm_umem_create_qp_t jm_umem_create_qp = nullptr;
+  jm_umem_destroy_qp_t jm_umem_destroy_qp = nullptr;
+
+  void* handle = nullptr;
+
+#define JM_LOAD_SYMBOL(var, name) var = (var##_t)DvLoadSymbol(handle, name)
+
+  bool Load() {
+    handle = DvLoadLibrary("libjmrd.so");
+
+    JM_LOAD_SYMBOL(jm_get_qp_db, "jmdv_get_qp_db");
+    JM_LOAD_SYMBOL(jm_get_cq_db, "jmdv_get_cq_db");
+    JM_LOAD_SYMBOL(jm_get_cq_size, "jmdv_calc_cq_size");
+    JM_LOAD_SYMBOL(jm_get_cq_info, "jmdv_get_cq_info");
+    JM_LOAD_SYMBOL(jm_get_sq_info, "jmdv_get_sq_info");
+    JM_LOAD_SYMBOL(jm_get_cq_dbr_size, "jmdv_get_cq_dbr_size");
+    JM_LOAD_SYMBOL(jm_get_sq_size, "jmdv_calc_sq_size");
+    JM_LOAD_SYMBOL(jm_get_qp_dbr_size, "jmdv_get_qp_dbr_size");
+    JM_LOAD_SYMBOL(jm_set_udp_src_port, "jmdv_set_udp_src_port");
+    JM_LOAD_SYMBOL(jm_umem_create_cq, "jmdv_umem_create_cq");
+    JM_LOAD_SYMBOL(jm_umem_destroy_cq, "jmdv_umem_destroy_cq");
+    JM_LOAD_SYMBOL(jm_umem_create_qp, "jmdv_umem_create_qp");
+    JM_LOAD_SYMBOL(jm_umem_destroy_qp, "jmdv_umem_destroy_qp");
+
+    return jm_get_cq_db && jm_get_cq_size && jm_get_cq_info && jm_get_sq_info &&
+           jm_get_cq_dbr_size && jm_get_sq_size && jm_get_qp_dbr_size && jm_set_udp_src_port &&
+           jm_umem_create_cq && jm_umem_destroy_cq && jm_umem_create_qp && jm_umem_destroy_qp;
+  }
+
+  static JmrdDvApi& Instance() {
+    static JmrdDvApi api;
+    return api;
+  }
+
+  static bool Available() {
+    static bool loaded = Instance().Load();
+    return loaded;
+  }
+};
+
 namespace mori {
 namespace application {
 using ::BnxtDvApi;
 using ::IonicDvApi;
+using ::JmrdDvApi;
 using ::Mlx5DvApi;
 }  // namespace application
 }  // namespace mori

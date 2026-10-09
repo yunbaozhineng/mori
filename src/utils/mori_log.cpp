@@ -19,16 +19,13 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-#pragma once
+#include "mori/utils/mori_log.hpp"
 
-// Device-only RDMA aggregator: the device-side post/poll primitives plus every
-// provider's device specializations (provider selected at runtime/compile-time
-// by the consumer). Kernel TUs that drive RDMA should include THIS; include
-// rdma.hpp instead when you also need the host primitives layer.
-#if defined(__HIPCC__) || defined(__CUDACC__)
-#include "mori/core/transport/rdma/device_primitives.hpp"
-#include "mori/core/transport/rdma/providers/bnxt/bnxt_device_primitives.hpp"
-#include "mori/core/transport/rdma/providers/ionic/ionic_device_primitives.hpp"
-#include "mori/core/transport/rdma/providers/jmrd/jmrd_device_primitives.hpp"
-#include "mori/core/transport/rdma/providers/mlx5/mlx5_device_primitives.hpp"
-#endif
+namespace mori {
+
+ModuleLogger& ModuleLogger::GetInstance() {
+  static ModuleLogger instance;
+  return instance;
+}
+
+}  // namespace mori

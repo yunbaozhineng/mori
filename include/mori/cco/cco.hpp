@@ -212,10 +212,12 @@ static constexpr uint32_t CCO_API_VERSION = 1;
 // conflict). cco_init.cpp maps core::ProviderType -> ccoProviderType.
 enum ccoProviderType {
   CCO_PROVIDER_UNKNOWN = 0,
+  CCO_PROVIDER_IBVERBS = 4,
   CCO_PROVIDER_MLX5 = 1,  // Mellanox
   CCO_PROVIDER_BNXT = 2,  // Broadcom
   CCO_PROVIDER_PSD = 3,   // Pensando
-  CCO_PROVIDER_IBVERBS = 4,
+  CCO_PROVIDER_JMRD = 5,   // Jaguar
+
 };
 
 // GDA backend QP allocation strategy.

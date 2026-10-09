@@ -64,6 +64,7 @@ detect_nic_type() {
     # 1. Environment variable override
     if [ "${USE_BNXT:-}" = "ON" ]; then echo "bnxt"; return; fi
     if [ "${USE_IONIC:-}" = "ON" ]; then echo "ionic"; return; fi
+    if [ "${USE_JMRD:-}" = "ON" ]; then echo "jmrd"; return; fi
     if [ "${MORI_DEVICE_NIC:-}" != "" ]; then echo "${MORI_DEVICE_NIC}"; return; fi
 
     # 2. /sys/class/infiniband/ — device name prefix + driver symlink
@@ -76,6 +77,7 @@ detect_nic_type() {
             case "$name" in
                 bnxt_re*) bnxt=$((bnxt + 1)) ;;
                 ionic*)   ionic=$((ionic + 1)) ;;
+                jmrd*)    jmrd=$((jmrd + 1)) ;;
                 mlx5*)    mlx5=$((mlx5 + 1)) ;;
                 *)
                     # Driver symlink fallback for generic names (rdma0, etc.)
@@ -83,6 +85,7 @@ detect_nic_type() {
                     case "$drv" in
                         bnxt_re|bnxt_en) bnxt=$((bnxt + 1)) ;;
                         ionic_rdma|ionic) ionic=$((ionic + 1)) ;;
+                                    jmrd) jmrd=$((jmrd + 1)) ;;
                         mlx5_core|mlx5_ib) mlx5=$((mlx5 + 1)) ;;
                     esac
                     ;;
@@ -90,6 +93,7 @@ detect_nic_type() {
         done
         if [ $bnxt -gt 0 ] && [ $bnxt -ge $mlx5 ]; then echo "bnxt"; return; fi
         if [ $ionic -gt 0 ] && [ $ionic -ge $mlx5 ]; then echo "ionic"; return; fi
+        if [ $jmrd -gt 0 ] && [ $jmrd -ge $mlx5 ]; then echo "jmrd"; return; fi
         if [ $mlx5 -gt 0 ]; then echo "mlx5"; return; fi
     fi
 
@@ -100,8 +104,10 @@ detect_nic_type() {
             local pci_bnxt=$(echo "$lspci_out" | grep -c "14e4" || true)
             local pci_ionic=$(echo "$lspci_out" | grep -c "1dd8" || true)
             local pci_mlx5=$(echo "$lspci_out" | grep -c "15b3" || true)
+            local pci_jmrd=$(echo "$lspci_out" | grep -c "1f53" || true)
             if [ $pci_bnxt -gt 0 ] && [ $pci_bnxt -ge $pci_mlx5 ]; then echo "bnxt"; return; fi
             if [ $pci_ionic -gt 0 ] && [ $pci_ionic -ge $pci_mlx5 ]; then echo "ionic"; return; fi
+            if [ $pci_jmrd -gt 0 ] && [ $pci_jmrd -ge $pci_mlx5 ]; then echo "jmrd"; return; fi
             if [ $pci_mlx5 -gt 0 ]; then echo "mlx5"; return; fi
         fi
     fi
@@ -110,6 +116,7 @@ detect_nic_type() {
     for dir in /usr/local/lib /usr/lib /usr/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu; do
         [ -f "$dir/libbnxt_re.so" ] && { echo "bnxt"; return; }
         [ -f "$dir/libionic.so" ] && { echo "ionic"; return; }
+        [ -f "$dir/libjmrd.so" ] && { echo "jmrd"; return; }
     done
 
     # 5. Default
@@ -121,6 +128,7 @@ NIC_DEFINES=""
 case "$NIC_TYPE" in
     bnxt)  NIC_DEFINES="-DMORI_DEVICE_NIC_BNXT" ;;
     ionic) NIC_DEFINES="-DMORI_DEVICE_NIC_IONIC" ;;
+    jmrd)  NIC_DEFINES="-DMORI_DEVICE_NIC_JMRD" ;;
 esac
 echo "[mori] NIC: ${NIC_TYPE^^}"
 

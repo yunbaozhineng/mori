@@ -42,6 +42,8 @@ enum ProviderType {
   BNXT = 2,
   // Pensando direct verbs
   PSD = 3,
+  // JaguarMicro direct verbs
+  JMRD = 5,
   // Ib verbs
   IBVERBS = 4,
 };
@@ -110,10 +112,11 @@ struct WorkQueueHandle {
   uint32_t readyIdx{0};
   union {
     struct {
-      uint32_t msntblSlotIdx;
-      uint32_t psnIdx;  // for bnxt msn psn index calculate
+      uint32_t msntblSlotIdx;  // for jm postIdx16 + rsnIdx16
+      uint32_t psnIdx;         // for bnxt msn psn index calculate
     };
-    uint64_t msnPack{0};
+    uint64_t psnRsnPack{0};
+    uint64_t msnPack;
   };
   void* sqAddr{nullptr};
   void* msntblAddr{nullptr};  // for bnxt
@@ -123,7 +126,10 @@ struct WorkQueueHandle {
   void* rqdbrAddr{nullptr};
   uint32_t mtuSize{4096};
   uint32_t sqWqeNum{0};
-  uint32_t msntblNum{0};
+  union {
+    uint32_t msntblNum{0};
+    uint32_t fpsnIdx;  // for jm fpsn index calculate
+  };
   uint32_t rqWqeNum{0};
   uint32_t postSendLock{0};
   bool color;
@@ -160,6 +166,7 @@ enum class RdmaDeviceVendorId : uint32_t {
   Mellanox = 0x02c9,
   Broadcom = 0x14E4,
   Pensando = 0x1dd8,
+  Jaguar = 0x1f53,
 };
 
 // Device-side view of an RDMA endpoint: a pure device POD over core's WQ/CQ/Ibuf
@@ -180,6 +187,8 @@ struct RdmaEndpointDevice {
         return ProviderType::BNXT;
       case RdmaDeviceVendorId::Pensando:
         return ProviderType::PSD;
+      case RdmaDeviceVendorId::Jaguar:
+        return ProviderType::JMRD;
       default:
         return ProviderType::Unknown;
     }

@@ -103,6 +103,9 @@ __global__ void SendRecvOnGpu(RdmaEndpoint& epSend, RdmaEndpoint& epRecv, RdmaMe
       case ProviderType::PSD:
         SendThreadKernel<ProviderType::PSD>(epSend, mrRecv);
         break;
+      case ProviderType::JMRD:
+        SendThreadKernel<ProviderType::JMRD>(epSend, mrRecv);
+        break;
       default:
         // unsupported provider
         break;

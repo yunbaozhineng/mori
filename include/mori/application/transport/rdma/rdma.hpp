@@ -178,6 +178,8 @@ struct RdmaEndpoint {
       return core::ProviderType::BNXT;
     } else if (vendorId == RdmaDeviceVendorId::Pensando) {
       return core::ProviderType::PSD;
+    } else if (vendorId == RdmaDeviceVendorId::Jaguar) {
+      return core::ProviderType::JMRD;
     } else {
       printf("unknown vendorId %u", static_cast<uint32_t>(vendorId));
       assert(false);

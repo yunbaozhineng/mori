@@ -280,6 +280,8 @@ def _nic_defines() -> list[str]:
         return ["-DMORI_DEVICE_NIC_BNXT"]
     elif nic == "ionic":
         return ["-DMORI_DEVICE_NIC_IONIC"]
+    elif nic == "jmrd":
+        return ["-DMORI_DEVICE_NIC_JMRD"]
     return []
 
 

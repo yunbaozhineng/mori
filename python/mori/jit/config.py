@@ -153,12 +153,14 @@ _DRIVER_TO_NIC = {
     "mlx5_ib": "mlx5",
     "ionic_rdma": "ionic",
     "ionic": "ionic",
+    "jmrd": "jmrd",
 }
 
 _NIC_PCI_VENDORS = {
     "14e4": "bnxt",  # Broadcom BCM576xx / BCM578xx
     "1dd8": "ionic",  # AMD/Pensando
     "15b3": "mlx5",  # Mellanox/NVIDIA ConnectX
+    "1f53": "jmrd",  # Jaguar
 }
 
 _LIB_SEARCH_PATHS = [
@@ -172,6 +174,7 @@ _NIC_LIB_NAMES: dict[str, str] = {
     "mlx5": "libmlx5.so",
     "bnxt": "libbnxt_re.so",
     "ionic": "libionic.so",
+    "jmrd": "libjmrd.so",
 }
 
 
@@ -211,23 +214,25 @@ def detect_nic_type() -> str:
       4. User-space library fallback
       5. Default: mlx5
 
-    Returns ``"bnxt"``, ``"ionic"``, or ``"mlx5"``.
+    Returns ``"bnxt"``, ``"ionic"``, ``"jmrd"``, or ``"mlx5"``.
     """
     env_device_nic = os.environ.get("MORI_DEVICE_NIC", "").lower()
-    if env_device_nic in ("bnxt", "ionic", "mlx5"):
+    if env_device_nic in ("bnxt", "ionic", "jmrd","mlx5"):
         return env_device_nic
 
     ib_dir = "/sys/class/infiniband"
     if os.path.isdir(ib_dir):
         try:
             devices = os.listdir(ib_dir)
-            counts: dict[str, int] = {"mlx5": 0, "bnxt": 0, "ionic": 0}
+            counts: dict[str, int] = {"mlx5": 0, "bnxt": 0, "ionic": 0, "jmrd":0}
 
             for dev in devices:
                 if dev.startswith("bnxt_re"):
                     counts["bnxt"] += 1
                 elif dev.startswith("ionic"):
                     counts["ionic"] += 1
+                elif dev.startswith("jmrd"):
+                    counts["jmrd"] += 1
                 elif dev.startswith("mlx5"):
                     counts["mlx5"] += 1
                 else:

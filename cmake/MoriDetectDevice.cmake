@@ -2,7 +2,7 @@
 #
 # Provides: mori_detect_device_config() Sets the following variables in the
 # caller's scope: MORI_GPU_ARCH          — GPU architecture string (e.g.
-# "gfx942") MORI_DEVICE_NIC        — NIC type: "mlx5", "bnxt", or "ionic"
+# "gfx942") MORI_DEVICE_NIC        — NIC type: "mlx5", "bnxt", "ionic", or "jmrd"
 # MORI_DEVICE_NIC_DEFINE — Compile definition (e.g. "MORI_DEVICE_NIC_BNXT"),
 # empty for mlx5 (the default provider)
 #
@@ -147,6 +147,10 @@ function(_mori_detect_device_nic out_var)
     _mori_mlx5_lib
     NAMES mlx5
     HINTS /usr/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu)
+  find_library(
+    _mori_jmrd_lib
+    NAMES jmrd
+    HINTS /usr/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu)
 
   # bnxt headers (bnxt_re_dv.h, bnxt_re_hsi.h) are bundled in the mori source
   # tree at include/mori/core/transport/rdma/providers/bnxt/, so no system
@@ -158,6 +162,8 @@ function(_mori_detect_device_nic out_var)
     elseif(${_nic} STREQUAL "ionic" AND _mori_ionic_lib)
       set(${_result} TRUE)
     elseif(${_nic} STREQUAL "mlx5" AND _mori_mlx5_lib)
+      set(${_result} TRUE)
+    elseif(${_nic} STREQUAL "jmrd" AND _mori_jmrd_lib)
       set(${_result} TRUE)
     else()
       set(${_result} FALSE)
@@ -179,6 +185,7 @@ function(_mori_detect_device_nic out_var)
   set(_bnxt 0)
   set(_ionic 0)
   set(_mlx5 0)
+  set(_jmrd 0)
   foreach(_dev ${_ib_devices})
     get_filename_component(_name ${_dev} NAME)
     if(_name MATCHES "^bnxt_re")
@@ -187,6 +194,8 @@ function(_mori_detect_device_nic out_var)
       math(EXPR _ionic "${_ionic} + 1")
     elseif(_name MATCHES "^mlx5")
       math(EXPR _mlx5 "${_mlx5} + 1")
+    elseif(_name MATCHES "^jmrd")
+      math(EXPR _jmrd "${_jmrd} + 1")
     else()
       execute_process(
         COMMAND readlink -f "${_dev}/device/driver"
@@ -201,6 +210,8 @@ function(_mori_detect_device_nic out_var)
           math(EXPR _ionic "${_ionic} + 1")
         elseif(_drv_name MATCHES "^mlx5")
           math(EXPR _mlx5 "${_mlx5} + 1")
+        elseif(_drv_name MATCHES "^jmrd")
+          math(EXPR _jmrd "${jmrd} + 1")
         endif()
       endif()
     endif()
@@ -216,6 +227,9 @@ function(_mori_detect_device_nic out_var)
   if(_ionic GREATER 0)
     list(APPEND _sysfs_candidates "${_ionic}:ionic")
   endif()
+  if(_jmrd GREATER 0)
+    list(APPEND _sysfs_candidates "${_jmrd}:jmrd")
+  endif()
   if(_sysfs_candidates)
     list(
       SORT _sysfs_candidates
@@ -227,7 +241,7 @@ function(_mori_detect_device_nic out_var)
       if(_has_lib)
         message(
           STATUS
-            "Mori device NIC: ${_nic} (sysfs, mlx5=${_mlx5} bnxt=${_bnxt} ionic=${_ionic})"
+            "Mori device NIC: ${_nic} (sysfs, mlx5=${_mlx5} bnxt=${_bnxt} ionic=${_ionic} jmrd=${_jmrd})"
         )
         set(${out_var}
             "${_nic}"
@@ -247,9 +261,11 @@ function(_mori_detect_device_nic out_var)
     string(REGEX MATCHALL "14e4" _b "${_lspci}")
     string(REGEX MATCHALL "1dd8" _i "${_lspci}")
     string(REGEX MATCHALL "15b3" _m "${_lspci}")
+    string(REGEX MATCHALL "1f53" _j "${_lspci}")
     list(LENGTH _b _bp)
     list(LENGTH _i _ip)
     list(LENGTH _m _mp)
+    list(LENGTH _j _jp)
 
     set(_lspci_candidates "")
     if(_mp GREATER 0)
@@ -260,6 +276,9 @@ function(_mori_detect_device_nic out_var)
     endif()
     if(_ip GREATER 0)
       list(APPEND _lspci_candidates "${_ip}:ionic")
+    endif()
+    if(_jp GREATER 0)
+      list(APPEND _lspci_candidates "${_jp}:jmrd")
     endif()
     if(_lspci_candidates)
       list(
@@ -287,6 +306,8 @@ function(_mori_detect_device_nic out_var)
     set(_nic "bnxt")
   elseif(_mori_ionic_lib)
     set(_nic "ionic")
+  elseif(_mori_jmrd_lib)
+    set(_nic "jmrd")
   else()
     set(_nic "mlx5")
   endif()
@@ -307,6 +328,8 @@ function(mori_detect_device_config)
     set(_nic_define "MORI_DEVICE_NIC_BNXT")
   elseif(_device_nic STREQUAL "ionic")
     set(_nic_define "MORI_DEVICE_NIC_IONIC")
+  elseif(_device_nic STREQUAL "jmrd")
+    set(_nic_define "MORI_DEVICE_NIC_JMRD")
   else()
     set(_nic_define "")
   endif()

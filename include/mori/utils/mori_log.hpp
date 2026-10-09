@@ -43,10 +43,7 @@ class ModuleLogger {
  public:
   enum class Level { TRACE = 0, DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4, CRITICAL = 5 };
 
-  static ModuleLogger& GetInstance() {
-    static ModuleLogger instance;
-    return instance;
-  }
+  static ModuleLogger& GetInstance();
 
  private:
   ModuleLogger() {

@@ -132,6 +132,8 @@ static_assert(static_cast<int>(CCO_PROVIDER_BNXT) == static_cast<int>(core::Prov
               "ccoProviderType drifted from core::ProviderType");
 static_assert(static_cast<int>(CCO_PROVIDER_PSD) == static_cast<int>(core::ProviderType::PSD),
               "ccoProviderType drifted from core::ProviderType");
+static_assert(static_cast<int>(CCO_PROVIDER_JMRD) == static_cast<int>(core::ProviderType::JMRD),
+              "ccoProviderType drifted from core::ProviderType");
 static_assert(static_cast<int>(CCO_PROVIDER_IBVERBS) ==
                   static_cast<int>(core::ProviderType::IBVERBS),
               "ccoProviderType drifted from core::ProviderType");

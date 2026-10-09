@@ -240,7 +240,8 @@ SymmMemObjPtr SymmMemManager::RegisterSymmMemObj(void* localPtr, size_t size, bo
       cpuMemObj->lkey = mr.lkey;
       cpuMemObj->peerRkeys[rank] = mr.rkey;
     }
-    bootNet.Allgather(&cpuMemObj->peerRkeys[rank], cpuMemObj->peerRkeys, sizeof(uint32_t));
+    uint32_t localRkey = cpuMemObj->peerRkeys[rank];
+    bootNet.Allgather(&localRkey, cpuMemObj->peerRkeys, sizeof(uint32_t));
   }
 
   // Copy memory object to GPU memory, we need to access it from GPU directly

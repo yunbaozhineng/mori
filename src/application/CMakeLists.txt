@@ -64,6 +64,7 @@ list(
   transport/rdma/providers/mlx5/mlx5_abi_parity.cpp
   transport/rdma/providers/bnxt/bnxt.cpp
   transport/rdma/providers/ionic/ionic.cpp
+  transport/rdma/providers/jmrd/jmrd.cpp
   transport/rdma/providers/ibverbs/ibverbs.cpp
   transport/tcp/tcp.cpp
   transport/sdma/anvil.cpp

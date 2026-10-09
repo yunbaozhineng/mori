@@ -47,6 +47,7 @@ echo "[cco] GPU architecture: $GPU_ARCH"
 detect_nic_type() {
     if [ "${USE_BNXT:-}" = "ON" ]; then echo "bnxt"; return; fi
     if [ "${USE_IONIC:-}" = "ON" ]; then echo "ionic"; return; fi
+    if [ "${USE_JMRD:-}" = "ON" ]; then echo "jmrd"; return; fi
     if [ "${MORI_DEVICE_NIC:-}" != "" ]; then echo "${MORI_DEVICE_NIC}"; return; fi
     local ib_dir="/sys/class/infiniband"
     if [ -d "$ib_dir" ]; then
@@ -57,18 +58,21 @@ detect_nic_type() {
             case "$name" in
                 bnxt_re*) bnxt=$((bnxt + 1)) ;;
                 ionic*)   ionic=$((ionic + 1)) ;;
+                jmrd*)    jmrd=$((jmrd + 1)) ;;
                 mlx5*)    mlx5=$((mlx5 + 1)) ;;
                 *)
                     local drv=$(readlink -f "$dev/device/driver" 2>/dev/null | xargs basename 2>/dev/null)
                     case "$drv" in
                         bnxt_re|bnxt_en) bnxt=$((bnxt + 1)) ;;
                         ionic_rdma|ionic) ionic=$((ionic + 1)) ;;
+                                    jmrd) jmrd=$((jmrd + 1)) ;;
                         mlx5_core|mlx5_ib) mlx5=$((mlx5 + 1)) ;;
                     esac ;;
             esac
         done
         if [ $bnxt -gt 0 ] && [ $bnxt -ge $mlx5 ]; then echo "bnxt"; return; fi
         if [ $ionic -gt 0 ] && [ $ionic -ge $mlx5 ]; then echo "ionic"; return; fi
+        if [ $jmrd -gt 0 ] && [ $jmrd -ge $mlx5 ]; then echo "jmrd"; return; fi
         if [ $mlx5 -gt 0 ]; then echo "mlx5"; return; fi
     fi
     echo "mlx5"
@@ -79,6 +83,7 @@ NIC_DEFINES=""
 case "$NIC_TYPE" in
     bnxt)  NIC_DEFINES="-DMORI_DEVICE_NIC_BNXT" ;;
     ionic) NIC_DEFINES="-DMORI_DEVICE_NIC_IONIC" ;;
+    jmrd) NIC_DEFINES="-DMORI_DEVICE_NIC_JMRD" ;;
 esac
 echo "[cco] NIC: ${NIC_TYPE^^}  (cov=${COV})"
 
